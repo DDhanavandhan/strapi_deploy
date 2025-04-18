@@ -18,6 +18,8 @@ WORKDIR /app
 
 COPY package.json package-lock.json ./
 
+COPY .env .env
+
 RUN npm install
 
 #Copy the entire Strapi app source code
