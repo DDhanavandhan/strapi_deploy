@@ -50,8 +50,9 @@ jobs:
     - name: Output EC2 Instance Public IP
       working-directory: ${{ env.WORKING_DIR }}
       run: |
-        echo "EC2_PUBLIC_IP=$(terraform output -raw instance_public_ip)" >> $GITHUB_ENV
+        EC2_PUBLIC_IP=$(terraform output -raw instance_public_ip)
+        echo "EC2_PUBLIC_IP=${EC2_PUBLIC_IP}" >> $GITHUB_ENV
     
-    - name: Display Public IP
+    - name: Display Public IP 
       run: |
         echo "EC2 Instance Public IP: ${{ env.EC2_PUBLIC_IP }}"
