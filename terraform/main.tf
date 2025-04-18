@@ -66,9 +66,10 @@ resource "aws_instance" "strapi_ec2" {
               set -x
               exec > /var/log/user-data.log 2>&1
               apt-get update -y
-              apt-get install -y docker.io
+              apt-get install -y docker.io awscli
               systemctl start docker
               systemctl enable docker 
+              aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 626635402783.dkr.ecr.us-east-1.amazonaws.com
               docker pull ${var.image_tag}
               docker run -d -p 1337:1337 --restart always --name strapi ${var.image_tag}
               EOF
@@ -78,3 +79,6 @@ resource "aws_instance" "strapi_ec2" {
   }
 }
 
+output "instance_public_ip" {
+  value = aws_instance.strapi_ec2.public_ip
+}
