@@ -2,15 +2,42 @@ provider "aws" {
   region = var.aws_region
 }
 
+# IAM Role for EC2 with Administrator Access
+resource "aws_iam_role" "ec2_admin_role" {
+  name = "ec2-admin-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [{
+      Effect = "Allow",
+      Principal = {
+        Service = "ec2.amazonaws.com"
+      },
+      Action = "sts:AssumeRole"
+    }]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "admin_attach" {
+  role       = aws_iam_role.ec2_admin_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
+}
+
+resource "aws_iam_instance_profile" "ec2_profile" {
+  name = "ec2-admin-profile"
+  role = aws_iam_role.ec2_admin_role.name
+}
+
+# Key Pair
 resource "aws_key_pair" "strapi_key" {
   key_name   = "ec2-key-unique"
   public_key = file("${path.module}/keys/id_rsa.pub")
 }
 
+# Security Group
 resource "aws_security_group" "strapi_sg" {
   name        = "strapi-sg"
-  description = "Allow SSH and HTTP"
-
+  description = "Allow SSH, HTTP, HTTPS, and Strapi port"
 
   ingress {
     description = "SSH"
@@ -19,20 +46,15 @@ resource "aws_security_group" "strapi_sg" {
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
+
   ingress {
-    description = "strapi"
+    description = "Strapi"
     from_port   = 1337
     to_port     = 1337
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
-  ingress {
-    description = "https"
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+
   ingress {
     description = "HTTP"
     from_port   = 80
@@ -50,16 +72,19 @@ resource "aws_security_group" "strapi_sg" {
   }
 }
 
+# EC2 Instance
 resource "aws_instance" "strapi_ec2" {
-  ami           = var.ami_id
-  instance_type = var.instance_type
+  ami                    = var.ami_id
+  instance_type          = var.instance_type
+  key_name               = aws_key_pair.strapi_key.key_name
+  vpc_security_group_ids = [aws_security_group.strapi_sg.id]
+  associate_public_ip_address = true
+  iam_instance_profile   = aws_iam_instance_profile.ec2_profile.name
+
   root_block_device {
-    volume_size = 30 # Set the volume size to 30GB
+    volume_size = 30
     volume_type = "gp2"
   }
-  key_name                    = aws_key_pair.strapi_key.key_name
-  vpc_security_group_ids      = [aws_security_group.strapi_sg.id]
-  associate_public_ip_address = true
 
   user_data = <<-EOF
               #!/bin/bash
@@ -70,7 +95,7 @@ resource "aws_instance" "strapi_ec2" {
               apt-get install -y awscli
               systemctl start docker
               systemctl enable docker 
-              aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 626635402783.dkr.ecr.us-east-1.amazonaws.com
+              aws ecr get-login-password --region ${var.aws_region} | docker login --username AWS --password-stdin 626635402783.dkr.ecr.us-east-1.amazonaws.com
               docker pull ${var.image_tag}
               docker run -d -p 1337:1337 --restart always --name strapi ${var.image_tag}
               EOF
@@ -80,6 +105,7 @@ resource "aws_instance" "strapi_ec2" {
   }
 }
 
+# Output
 output "instance_public_ip" {
   value = aws_instance.strapi_ec2.public_ip
 }
