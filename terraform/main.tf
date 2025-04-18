@@ -4,7 +4,7 @@ provider "aws" {
 
 resource "aws_key_pair" "strapi_key" {
   key_name   = "ec2-key-unique"
-  public_key = file("~/.ssh/id_rsa.pub")
+public_key = file("${path.module}/keys/id_rsa.pub")
 }
 
 resource "aws_security_group" "strapi_sg" {
