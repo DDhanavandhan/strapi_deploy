@@ -11,7 +11,4 @@ output "strapi_url" {
   description = "The URL of the Strapi application"
   value       = "http://${aws_instance.strapi_ec2.public_ip}:1337"
 }
-output "strapi_admin_url" {
-  description = "The URL of the Strapi admin panel"
-  value       = "http://${aws_instance.strapi_ec2.public_ip}:1337/admin"
-}
+
