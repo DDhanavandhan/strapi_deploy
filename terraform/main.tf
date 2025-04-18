@@ -69,8 +69,8 @@ resource "aws_instance" "strapi_ec2" {
               apt-get install -y docker.io
               systemctl start docker
               systemctl enable docker 
-              docker pull dhanavandhan/strapi:latest
-              docker run -d -p 1337:1337 --restart always --name strapi dhanavandhan/strapi:latest
+              docker pull ${var.image_tag}
+              docker run -d -p 1337:1337 --restart always --name strapi ${var.image_tag}
               EOF
 
   tags = {

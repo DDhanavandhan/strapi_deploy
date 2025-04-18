@@ -13,5 +13,10 @@ variable "ami_id" {
   default     = "ami-084568db4383264d4"
 }
 
+variable "image_tag" {
+  description = "The full ECR image URI including tag to deploy"
+  type        = string
+}
+
 
 
