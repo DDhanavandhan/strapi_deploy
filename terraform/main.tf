@@ -66,7 +66,8 @@ resource "aws_instance" "strapi_ec2" {
               set -x
               exec > /var/log/user-data.log 2>&1
               apt-get update -y
-              apt-get install -y docker.io awscli
+              apt-get install -y docker.io 
+              apt-get install -y awscli
               systemctl start docker
               systemctl enable docker 
               aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 626635402783.dkr.ecr.us-east-1.amazonaws.com
