@@ -1,4 +1,4 @@
-name: CI - Build and Push Docker Image to ECR
+name: Build and Push Strapi Docker Image to ECR
 
 on:
   push:
@@ -9,22 +9,22 @@ env:
   AWS_REGION: us-east-1
   ECR_REPOSITORY: strapi
   IMAGE_TAG: ${{ github.sha }}
-  AWS_ACCOUNT_ID: 626635402783
 
 jobs:
   build-and-push:
+    name: Build and Push to ECR
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Configure AWS credentials
+      - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Login to Amazon ECR
         id: login-ecr
@@ -32,24 +32,27 @@ jobs:
 
       - name: Create ECR repository if it doesn't exist
         run: |
-          aws ecr describe-repositories --repository-names $ECR_REPOSITORY || \
-          aws ecr create-repository --repository-name $ECR_REPOSITORY
+          aws ecr describe-repositories --repository-names $ECR_REPOSITORY \
+          || aws ecr create-repository --repository-name $ECR_REPOSITORY \
+          --image-scanning-configuration scanOnPush=true \
+          --region $AWS_REGION
 
       - name: Build Docker image
         run: |
           docker build -t $ECR_REPOSITORY:$IMAGE_TAG .
-          docker tag $ECR_REPOSITORY:$IMAGE_TAG $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:$IMAGE_TAG
+          docker tag $ECR_REPOSITORY:$IMAGE_TAG 626635402783.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/$ECR_REPOSITORY:$IMAGE_TAG
 
       - name: Push Docker image to ECR
         run: |
-          docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push 626635402783.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/$ECR_REPOSITORY:$IMAGE_TAG
 
-      - name: Save image tag as artifact
-        run: echo $IMAGE_TAG > image_tag.txt
+      - name: Save image tag to artifact
+        run: echo $IMAGE_TAG > image-tag.txt
 
       - name: Upload image tag artifact
         uses: actions/upload-artifact@v3
         with:
           name: image-tag
-          path: image_tag.txt
+          path: image-tag.txt
+
 
