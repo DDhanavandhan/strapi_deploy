@@ -74,12 +74,12 @@ resource "aws_security_group" "strapi_sg" {
 
 # EC2 Instance
 resource "aws_instance" "strapi_ec2" {
-  ami                    = var.ami_id
-  instance_type          = var.instance_type
-  key_name               = aws_key_pair.strapi_key.key_name
-  vpc_security_group_ids = [aws_security_group.strapi_sg.id]
+  ami                         = var.ami_id
+  instance_type               = var.instance_type
+  key_name                    = aws_key_pair.strapi_key.key_name
+  vpc_security_group_ids      = [aws_security_group.strapi_sg.id]
   associate_public_ip_address = true
-  iam_instance_profile   = aws_iam_instance_profile.ec2_profile.name
+  iam_instance_profile        = aws_iam_instance_profile.ec2_profile.name
 
   root_block_device {
     volume_size = 30
