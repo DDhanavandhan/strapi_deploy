@@ -1,1 +1,8 @@
 node_modules
+.terraform/
+.terraform.lock.hcl
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
